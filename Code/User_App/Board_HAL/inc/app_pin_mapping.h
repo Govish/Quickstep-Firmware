@@ -36,6 +36,9 @@ public:
 
 	static const dio_pin_t status_led;
 	static const dio_pin_t user_button;
+	static const dio_pin_t red_led;
+	static const dio_pin_t yellow_led;
+	static const dio_pin_t green_led;
 
 	//==========================================================================
 
