@@ -43,7 +43,6 @@ public:
 	static const dio_pin_t mot_dir;
 	static const dio_pin_t mot_en;
 
-
 	//==========================================================================
 
 private:
