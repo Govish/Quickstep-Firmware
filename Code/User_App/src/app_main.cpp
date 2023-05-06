@@ -12,6 +12,8 @@
 #include "app_hal_int_utils.h"
 #include "app_hal_pwm.h"
 
+#include "motion_control_core.h"
+
 #include "debouncer.h"
 #include "soft_pwm.h"
 
@@ -41,16 +43,9 @@ uint32_t counter = 0;
 bool step_high = false;
 
 //toggle the step pin basically
+//but do it through the motion_control_core
 void stepper_func() {
-	if(step_high) {
-		step_pin.clear();
-		step_high = false;
-	}
-
-	else {
-		step_pin.set();
-		step_high = true;
-	}
+	Motion_Control_Core::mc_core_interrupt(20); //20us interrupt period
 }
 
 void run_pwm() {
@@ -83,7 +78,7 @@ void app_init() {
 
 	stepper.init();
 	stepper.set_phase(0.1);
-	stepper.set_freq(Timer::FREQ_20kHz);
+	stepper.set_freq(Timer::FREQ_50kHz);
 	stepper.set_int_priority(Priorities::MED_HIGH);
 	stepper.set_callback_func(&stepper_func);
 
