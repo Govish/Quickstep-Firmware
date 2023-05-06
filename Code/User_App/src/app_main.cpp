@@ -19,11 +19,12 @@ const DIO led_red(PinMap::red_led);
 const DIO led_yellow(PinMap::yellow_led);
 const DIO led_green(PinMap::green_led);
 const DIO status_led(PinMap::status_led);
-const DIO button_pin(PinMap::user_button);
+
+const DIO step_pin(PinMap::mot_step);
+const DIO dir_pin(PinMap::mot_dir);
+const DIO en_pin(PinMap::mot_en);
 
 
-Debouncer user_button(button_pin, 10, true);
-//Soft_PWM led_fade(status_led, 0, false);
 Hard_PWM led_fade(status_led, false);
 
 Soft_PWM red_pwm(led_red, 0, false);
@@ -31,14 +32,26 @@ Soft_PWM green_pwm(led_green, 0.1, false);
 Soft_PWM yellow_pwm(led_yellow, 0.2, false);
 
 Timer soft_pwm(Timer_Channels::CHANNEL_0);
-Timer debouncer(Timer_Channels::CHANNEL_1);
+Timer stepper(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
+
 Timer supervisor(Timer_Channels::CHANNEL_2);
 
 float pwm_val = 0;
 uint32_t counter = 0;
 
-void update_all_debouncers() {
-	user_button.sample_and_update();
+bool step_high = false;
+
+//toggle the step pin basically
+void stepper_func() {
+	if(step_high) {
+		step_pin.clear();
+		step_high = false;
+	}
+
+	else {
+		step_pin.set();
+		step_high = true;
+	}
 }
 
 void run_pwm() {
@@ -60,17 +73,21 @@ void inc_pwm() {
 void app_init() {
 	DIO::init();
 
+	en_pin.clear();
+	dir_pin.set();
+
 	soft_pwm.init();
 	soft_pwm.set_phase(0);
 	soft_pwm.set_freq(Timer::FREQ_10kHz);
-	soft_pwm.set_int_priority(Priorities::MED_HIGH);
+	soft_pwm.set_int_priority(Priorities::MED);
 	soft_pwm.set_callback_func(&run_pwm);
 
-	debouncer.init();
-	debouncer.set_phase(0.1);
-	debouncer.set_freq(Timer::FREQ_1kHz);
-	debouncer.set_int_priority(Priorities::MED);
-	debouncer.set_callback_func(&update_all_debouncers);
+	stepper.init();
+	stepper.set_phase(0.1);
+	stepper.set_freq(Timer::FREQ_20kHz);
+	stepper.set_int_priority(Priorities::MED_HIGH);
+	stepper.set_callback_func(&stepper_func);
+
 
 	supervisor.init();
 	supervisor.set_phase(0.5);
@@ -81,45 +98,21 @@ void app_init() {
 	soft_pwm.enable_int();
 	soft_pwm.enable_tim();
 
-	debouncer.enable_int();
-	debouncer.enable_tim();
+	stepper.enable_int();
+	stepper.enable_tim();
 
 	supervisor.enable_int();
 	supervisor.enable_tim();
 
 	Hard_PWM::configure(1000, Priorities::MED_HIGH);
-//
-//	Timing::start_timers();
-//
-//	en_pin.clear();
-//	dir_pin.set();
 }
 
 void app_loop() {
-	if(user_button.get_rising_edge_db()) {
-		//reset the soft pwm value if the user button is pressed
-		pwm_val = 0;
-		led_fade.set(pwm_val); //write to the pwm timer
-		red_pwm.set(pwm_val);
-		yellow_pwm.set(pwm_val);
-		green_pwm.set(pwm_val);
+	Timer::delay_ms(5000);
+	dir_pin.clear();
+	Timer::delay_ms(5000);
+	dir_pin.set();
 
-		counter++;//just for fun
-	}
-
-
-//	if(step_counter < 3200)
-//		dir_pin.set();
-//	else if(step_counter < 6399)
-//		dir_pin.clear();
-//	else
-//		step_counter = 0;
-//
-//	step_pin.set();
-//	Timing::delay_ms(1);
-//	step_pin.clear();
-//	Timing::delay_ms(1);
-//	step_counter++;
 }
 
 
