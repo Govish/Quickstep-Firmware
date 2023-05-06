@@ -26,9 +26,9 @@ typedef enum Priorities {
 
 //====================== DECLARING INTERRUPT HANDLERS HERE =========================
 extern "C" {
-	void TIM8_UP_TIM13_IRQHandler(void); //debouncer timer
-	void TIM8_TRG_COM_TIM14_IRQHandler(void); //soft PWM timer
-	void TIM1_BRK_TIM9_IRQHandler(void); //supervisor timer
+	void TIM1_BRK_TIM9_IRQHandler(void); //general purpose timer channel 0
+	void TIM1_TRG_COM_TIM11_IRQHandler(void); //general purpose timer channel 1
+	void TIM8_TRG_COM_TIM14_IRQHandler(void); //general purpose timer channel 2
 	void TIM2_IRQHandler(void); //hard PWM
 	void TIM3_IRQHandler(void); //hard PWM
 }
