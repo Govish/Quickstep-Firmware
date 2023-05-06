@@ -24,6 +24,7 @@ const DIO step_pin(PinMap::mot_step);
 const DIO dir_pin(PinMap::mot_dir);
 const DIO en_pin(PinMap::mot_en);
 
+
 Hard_PWM led_fade(status_led, false);
 
 Soft_PWM red_pwm(led_red, 0, false);
@@ -32,6 +33,7 @@ Soft_PWM yellow_pwm(led_yellow, 0.2, false);
 
 Timer soft_pwm(Timer_Channels::CHANNEL_0);
 Timer stepper(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
+
 Timer supervisor(Timer_Channels::CHANNEL_2);
 
 float pwm_val = 0;
@@ -86,6 +88,7 @@ void app_init() {
 	stepper.set_int_priority(Priorities::MED_HIGH);
 	stepper.set_callback_func(&stepper_func);
 
+
 	supervisor.init();
 	supervisor.set_phase(0.5);
 	supervisor.set_freq(Timer::FREQ_1Hz);
@@ -109,6 +112,7 @@ void app_loop() {
 	dir_pin.clear();
 	Timer::delay_ms(5000);
 	dir_pin.set();
+
 }
 
 

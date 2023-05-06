@@ -19,5 +19,6 @@ const dio_pin_t PinMap::mot_dir = {PORT_A, 9};
 const dio_pin_t PinMap::mot_en = {PORT_B, 6};
 
 
+
 //====================== END PIN MAPPING DEFINITIONS ============================
 
