@@ -45,7 +45,7 @@ bool step_high = false;
 //toggle the step pin basically
 //but do it through the motion_control_core
 void stepper_func() {
-	Motion_Control_Core::mc_core_interrupt(20); //20us interrupt period
+	Motion_Control_Core::mc_core_interrupt(step_pin, 0.02); //20us interrupt period
 }
 
 void run_pwm() {
@@ -101,10 +101,6 @@ void app_init() {
 }
 
 void app_loop() {
-	Timer::delay_ms(5000);
-	dir_pin.clear();
-	Timer::delay_ms(5000);
-	dir_pin.set();
 }
 
 
