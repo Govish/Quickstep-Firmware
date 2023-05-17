@@ -10,13 +10,13 @@
 //sin function just accesses the LUT with a little bit of indexing checks
 //could theoretically make the access slightly faster without the indexing protection but just for safety
 float Trig::sin(uint16_t x) {
-	return Trig::SINE_LUT[x & 0x3FF];
+	return Trig::SINE_LUT[x & 0xFFF];
 }
 
 //cosine function just accesses the LUT with a little bit of indexing checks
 //could theoretically make the access slightly faster without the indexing protection but just for safety
 float Trig::cos(uint16_t x) {
-	return Trig::COSINE_LUT[x & 0x3FF];
+	return Trig::COSINE_LUT[x & 0xFFF];
 }
 
 

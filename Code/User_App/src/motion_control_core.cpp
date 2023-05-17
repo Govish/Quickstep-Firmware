@@ -22,8 +22,8 @@ const float PI = 3.14159;
 //##### calculate acceleration related values for the move
 static const float accel_time = (CRUISE_VELOCITY / AVG_ACCEL) * 1000.0; //in ms
 static const float omega = 2 * PI / (accel_time); //tells us how quickly go accelerate; 2 * pi / accel_time (ms) is omega
-static const float omega_scaled = omega * 4096.0; //scaled to work with the cosine look-up table
-static const float A = AVG_ACCEL * STEPS_PER_MM / (1e6);//steps per ms^2, divided by 2; used by position equation
+static const float omega_scaled = 4096.0 / accel_time; //scaled to work with the cosine look-up table
+static const float A = AVG_ACCEL * STEPS_PER_MM / (1e6);//steps per ms^2; used by position equation
 static const float A_over_2 = A / 2.0; //need this for position equation
 static const float A_over_w2 = A / (omega * omega); //need this for position equation
 
@@ -45,16 +45,16 @@ void Motion_Control_Core::mc_core_interrupt(const DIO &step_pin, float tick_inc_
 	//if we're accelerating
 	if(motion_tick_ms < accel_finshed) {
 		//absolute position required since integration would result in error over time
-		axis_position_f = 	A_over_2 * motion_tick_ms * motion_tick_ms;
-							// + A_over_w2 * Trig::cos((uint16_t)(omega_scaled * motion_tick_ms));
+		axis_position_f = 	A_over_2 * motion_tick_ms * motion_tick_ms
+							 + A_over_w2 * (Trig::cos((uint16_t)(omega_scaled * motion_tick_ms)) - 1.0);
 	}
 	//if we're decelerating
 	else if (motion_tick_ms > (decel_start)) {
 		//absolute position required since integration would result in error over time
 		float negative_t = move_time - motion_tick_ms; //basically run acceleration backward
 		axis_position_f = 	total_distance -
-							A_over_2 * negative_t * negative_t;
-							// + A_over_w2 * Trig::cos((uint16_t)(omega_scaled * negative_t));
+							A_over_2 * negative_t * negative_t
+							 - A_over_w2 * (Trig::cos((uint16_t)(omega_scaled * negative_t)) - 1.0);
 	}
 	//otherwise we're just cruising
 	else {
