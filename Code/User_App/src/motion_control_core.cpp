@@ -12,9 +12,12 @@ volatile static bool step_high = false;
 
 //================= for testing, define these as constants ================
 #define STEPS_PER_MM 	160.0f //nominal GT2 with 20 tooth pulley with 16th microstepping
-#define AVG_ACCEL 		500.0f //mm/s^2 accel value
-#define CRUISE_VELOCITY	250.0f //mm/s cruise speed for the motor
-#define MOVE_DISTANCE	400.0f //mm move distance (should work out to 10 rotations)
+#define AVG_ACCEL 		300.0f //mm/s^2 accel value
+#define CRUISE_VELOCITY	500.0f //mm/s cruise speed for the motor
+
+#define MOVE_DISTANCE_X 400.0f //mm move distance for the x axis
+#define MOVE_DISTANCE_Y 400.0f //mm move distance for the y axis
+#define MOVE_DISTANCE	800.0f //mm move distance (should work out to 10 rotations)
 
 //============== converting these above constants to units of steps and microseconds =================
 const float PI = 3.14159;
@@ -39,7 +42,7 @@ static const float move_time = 2 * accel_time + cruise_time; //in ms
 static const float accel_finshed = accel_time; //ms value at which acceleration phase is completed
 static const float decel_start = move_time - accel_time; //ms value at which deceleration phase starts
 
-void Motion_Control_Core::mc_core_interrupt(const DIO &step_pin, float tick_inc_ms) {
+void Motion_Control_Core::mc_core_interrupt(const DIO &x_step_pin, const DIO &y_step_pin, float tick_inc_ms) {
 	motion_tick_ms += tick_inc_ms; //increment the tick by the appropriate amount
 
 	//if we're accelerating
@@ -64,11 +67,13 @@ void Motion_Control_Core::mc_core_interrupt(const DIO &step_pin, float tick_inc_
 	//step the motor if we cross an integer step count
 	if((int32_t)axis_position_f > (axis_position_steps + 1)) {
 		if(step_high) {
-			step_pin.clear();
+			x_step_pin.clear();
+			y_step_pin.clear();
 			step_high = false;
 		}
 		else {
-			step_pin.set();
+			x_step_pin.set();
+			y_step_pin.set();
 			step_high = true;
 		}
 		axis_position_steps++;

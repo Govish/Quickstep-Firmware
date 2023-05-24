@@ -20,7 +20,7 @@ public:
 	//this is the function where the heart of the motion control happens
 	//runs in an interrupt context, called from a timer interrupt
 	//pass in the how many microseconds since the last interrupt
-	static void mc_core_interrupt(const DIO &step_pin, float tick_inc_ms);
+	static void mc_core_interrupt(const DIO &x_step_pin, const DIO &y_step_pin, float tick_inc_ms);
 
 private:
 	Motion_Control_Core(); //shouldn't be able to instantiate these

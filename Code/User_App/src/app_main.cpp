@@ -22,9 +22,13 @@ const DIO led_yellow(PinMap::yellow_led);
 const DIO led_green(PinMap::green_led);
 const DIO status_led(PinMap::status_led);
 
-const DIO step_pin(PinMap::mot_step);
-const DIO dir_pin(PinMap::mot_dir);
-const DIO en_pin(PinMap::mot_en);
+const DIO x_step_pin(PinMap::x_mot_step);
+const DIO x_dir_pin(PinMap::x_mot_dir);
+const DIO x_en_pin(PinMap::x_mot_en);
+
+const DIO y_step_pin(PinMap::y_mot_step);
+const DIO y_dir_pin(PinMap::y_mot_dir);
+const DIO y_en_pin(PinMap::y_mot_en);
 
 
 Hard_PWM led_fade(status_led, false);
@@ -45,7 +49,7 @@ bool step_high = false;
 //toggle the step pin basically
 //but do it through the motion_control_core
 void stepper_func() {
-	Motion_Control_Core::mc_core_interrupt(step_pin, 0.02); //20us interrupt period
+	Motion_Control_Core::mc_core_interrupt(x_step_pin, y_step_pin, 0.01); //10us interrupt period
 }
 
 void run_pwm() {
@@ -67,8 +71,11 @@ void inc_pwm() {
 void app_init() {
 	DIO::init();
 
-	en_pin.clear();
-	dir_pin.set();
+	x_en_pin.clear();
+	x_dir_pin.set();
+
+	y_en_pin.clear();
+	y_dir_pin.set();
 
 	soft_pwm.init();
 	soft_pwm.set_phase(0);
@@ -78,7 +85,7 @@ void app_init() {
 
 	stepper.init();
 	stepper.set_phase(0.1);
-	stepper.set_freq(Timer::FREQ_50kHz);
+	stepper.set_freq(Timer::FREQ_100kHz);
 	stepper.set_int_priority(Priorities::MED_HIGH);
 	stepper.set_callback_func(&stepper_func);
 

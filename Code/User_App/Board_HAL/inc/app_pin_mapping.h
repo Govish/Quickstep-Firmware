@@ -39,9 +39,12 @@ public:
 	static const dio_pin_t red_led;
 	static const dio_pin_t yellow_led;
 	static const dio_pin_t green_led;
-	static const dio_pin_t mot_step;
-	static const dio_pin_t mot_dir;
-	static const dio_pin_t mot_en;
+	static const dio_pin_t x_mot_step;
+	static const dio_pin_t x_mot_dir;
+	static const dio_pin_t x_mot_en;
+	static const dio_pin_t y_mot_step;
+	static const dio_pin_t y_mot_dir;
+	static const dio_pin_t y_mot_en;
 
 	//==========================================================================
 

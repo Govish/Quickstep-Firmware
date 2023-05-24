@@ -65,7 +65,6 @@ void Error_Handler(void);
 #define STEP_GPIO_Port GPIOC
 #define DIR_Pin GPIO_PIN_9
 #define DIR_GPIO_Port GPIOA
-
 #define LED_RED_Pin GPIO_PIN_10
 #define LED_RED_GPIO_Port GPIOA
 #define LED_YELLOW_Pin GPIO_PIN_3
@@ -74,7 +73,6 @@ void Error_Handler(void);
 #define LED_GREEN_GPIO_Port GPIOB
 #define DISABLE_Pin GPIO_PIN_6
 #define DISABLE_GPIO_Port GPIOB
-
 
 /* USER CODE BEGIN Private defines */
 
