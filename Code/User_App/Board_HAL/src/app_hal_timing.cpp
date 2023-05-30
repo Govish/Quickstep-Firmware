@@ -29,7 +29,7 @@ void empty_handler();
 const timer_config_struct_t Timer::timer_chan_configs[] = {
 		{MX_TIM9_Init, htim9, TIM1_BRK_TIM9_IRQn}, //channel 0 on timer 9
 		{MX_TIM11_Init, htim11, TIM1_TRG_COM_TIM11_IRQn}, //channel 1 on timer 11
-		{MX_TIM14_Init, htim14, TIM8_TRG_COM_TIM14_IRQn} //channel 2 on timer 14
+		{MX_TIM14_Init, htim14, TIM8_TRG_COM_TIM14_IRQn}, //channel 2 on timer 14
 };
 
 //initialize the callback function array to just be emtpy handlers at the start
@@ -42,6 +42,7 @@ callback_function_t Timer::callbacks[] = {
 //=================== section here just to defining frequency presets ======================
 //first number is prescaler value, second is auto-reload value
 //make sure to subtract 1 from the values!
+const timer_freq_t Timer::FREQ_400kHz = {0, 224}; //90MHz tick
 const timer_freq_t Timer::FREQ_200kHz = {0, 449}; //90MHz tick
 const timer_freq_t Timer::FREQ_100kHz = {0, 899}; //90MHz tick
 const timer_freq_t Timer::FREQ_50kHz = {0, 1799}; //90MHz tick
@@ -68,7 +69,7 @@ const timer_freq_t Timer::FREQ_0p1Hz = {44999, 19999}; //2kHz tick
 //======================= PUBLIC FUNCTION DEFINITIONS =========================
 Timer::Timer(timer_channel_t _channel): channel((int)_channel) {} //constructor
 
-void Timer::init() {
+void Timer::init() const {
 	//call the initialization function defined by CubeMX
 	Timer::timer_chan_configs[channel].init_func();
 
@@ -81,14 +82,14 @@ void Timer::init() {
 	set_int_priority(Priorities::MED);
 }
 
-void Timer::set_freq(timer_freq_t freq) {
+void Timer::set_freq(timer_freq_t freq) const {
 	//basically just drop in the prescaler and auto reload values from the struct into the appropriate registers
 	Timer::timer_chan_configs[channel].htim.Instance->ARR = freq.auto_reload;
 	Timer::timer_chan_configs[channel].htim.Instance->PSC = freq.prescaler;
 
 }
 
-void Timer::set_phase(float phase) {
+void Timer::set_phase(float phase) const {
 	//make sure phase is in a valid range
 	if(phase < 0) return;
 	if(phase >= 1) return;
@@ -98,12 +99,17 @@ void Timer::set_phase(float phase) {
 	Timer::timer_chan_configs[channel].htim.Instance->CNT = (uint16_t)(max_count * phase);
 }
 
-void Timer::set_callback_func(callback_function_t cb) {
+void Timer::reset_count() const {
+	//start counting from 0 again
+	Timer::timer_chan_configs[channel].htim.Instance->CNT = 0;
+}
+
+void Timer::set_callback_func(callback_function_t cb) const {
 	//just store the pointer to the callback function in the array
 	Timer::callbacks[channel] = cb;
 }
 
-void Timer::set_int_priority(int_priority_t prio) {
+void Timer::set_int_priority(int_priority_t prio) const {
 	//start with disabling the IRQ as we adjust the priority
 	HAL_NVIC_DisableIRQ(Timer::timer_chan_configs[channel].irq_type);
 
@@ -114,7 +120,7 @@ void Timer::set_int_priority(int_priority_t prio) {
 	HAL_NVIC_ClearPendingIRQ(Timer::timer_chan_configs[channel].irq_type);
 }
 
-void Timer::enable_int() {
+void Timer::enable_int() const {
 	//enable the NVIC channel
 	HAL_NVIC_EnableIRQ(Timer::timer_chan_configs[channel].irq_type);
 
@@ -122,7 +128,7 @@ void Timer::enable_int() {
 	Timer::timer_chan_configs[channel].htim.Instance->DIER = TIM_DIER_CC1IE;
 }
 
-void Timer::disable_int() {
+void Timer::disable_int() const {
 	//kill the interrupt source in the timer control register
 	Timer::timer_chan_configs[channel].htim.Instance->DIER = 0;
 
@@ -133,17 +139,17 @@ void Timer::disable_int() {
 	HAL_NVIC_ClearPendingIRQ(Timer::timer_chan_configs[channel].irq_type);
 }
 
-void Timer::enable_tim() {
+void Timer::enable_tim() const {
 	//just set the enable flag in the timer control register and let the hardware do its thing
 	Timer::timer_chan_configs[channel].htim.Instance->CR1 |= TIM_CR1_CEN;
 }
 
-void Timer::disable_tim() {
+void Timer::disable_tim() const {
 	//just clear the enable flag in the timer control register and let the hardware do its thing
 	Timer::timer_chan_configs[channel].htim.Instance->CR1 &= ~(TIM_CR1_CEN);
 }
 
-float Timer::get_freq() {
+float Timer::get_freq() const {
 	//start with timer clock frequency
 	//then divide that by the
 	return (TIM_F_CLK /
@@ -151,7 +157,7 @@ float Timer::get_freq() {
  		 (Timer::timer_chan_configs[channel].htim.Instance->ARR + 1) ));
 }
 
-float Timer::get_tim_fclk() {
+float Timer::get_tim_fclk() const {
 	//useful for other functions that need to compute timer counts and stuff like that
 	return TIM_F_CLK;
 }
@@ -182,17 +188,17 @@ void Timer::ISR_func(int channel) {
 //======================================= TIMER ISRs MAPPED TO VECTOR TABLE ===================================
 
 void CHAN_0_IRQ_HANDLER(void) {
-	//service the ISR with the class on channel 1
+	//service the ISR with the class on channel 0
 	Timer::ISR_func(0);
 }
 
 void CHAN_1_IRQ_HANDLER(void) {
-	//service the ISR with the class on channel 2
+	//service the ISR with the class on channel 1
 	Timer::ISR_func(1);
 }
 
 void CHAN_2_IRQ_HANDLER(void) {
-	//service the ISR with the class on channel 3
+	//service the ISR with the class on channel 2
 	Timer::ISR_func(2);
 }
 

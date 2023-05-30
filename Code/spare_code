@@ -1,0 +1,106 @@
+
+//==================================================== STEPS PER UNIT TYPE CODE in cpp file ===============================================
+
+//initialization of static members
+float Kinematics::steps_per_mm[NUM_AXES] = {0};
+
+//convert between active units to steps
+//pass an array the size of NUM_AXES
+void Kinematics::units_to_steps(float *steps_out, float *units_in) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		steps_out[i] = units_in[i] * steps_per_mm[i] * mm_per_unit;
+	}
+}
+
+//convert between steps to active units
+//pass an array the size of NUM_AXES
+void Kinematics::steps_to_units(float *steps_in, float *units_out) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		units_out[i] = steps_in[i] / (steps_per_mm[i] * mm_per_unit);
+	}
+}
+
+//convert between active units/second to steps/ms
+//pass an array the size of NUM_AXES
+void Kinematics::units_sec_to_steps_ms(float *steps_ms_out, float *units_sec_in) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		steps_ms_out[i] = units_sec_in[i] * steps_per_mm[i] * mm_per_unit * 0.001;
+	}
+}
+
+//convert between steps/ms to active units/second
+//pass an array the size of NUM_AXES
+void Kinematics::steps_ms_to_units_sec(float *steps_ms_in, float *units_sec_out) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		units_sec_out[i] = steps_ms_in[i] / (steps_per_mm[i] * mm_per_unit) * 1000;
+	}
+}
+
+//convert back and forth between active units/sec^2 and steps/ms^2
+//pass an array the size of NUM_AXES
+void Kinematics::units_sec2_to_steps_ms2(float *steps_ms2_out, float *units_sec2_in) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		steps_ms2_out[i] = units_sec2_in[i] * steps_per_mm[i] * mm_per_unit * 1e-6;
+	}
+}
+
+void Kinematics::steps_ms2_to_units_sec2(float *steps_ms2_in, float *units_sec2_out) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		units_sec2_out[i] = steps_ms2_in[i] / (steps_per_mm[i] * mm_per_unit) * 1e6;
+	}
+}
+
+//setter and getter methods for steps per unit
+//will be internally converted to steps per mm
+//but program can pass in values in units of the active_unit
+//arrays will be copied rather than referenced to the pointer for safety
+void Kinematics::set_steps_per_unit(float *steps_per_u) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		steps_per_mm[i] = steps_per_u[i] * mm_per_unit;
+	}
+}
+
+void Kinematics::get_steps_per_unit(float *steps_per_u) {
+	for(int i = 0; i < NUM_AXES; i++) {
+		steps_per_u[i] = steps_per_mm[i] / mm_per_unit;
+	}
+}
+
+void Kinematics::set_active_units(float _mm_per_unit) {
+	mm_per_unit = _mm_per_unit;
+}
+
+//==================================================== STEPS PER UNIT TYPE CODE in header file ===============================================
+//convert back and forth between active units and steps
+//pass an array the size of NUM_AXES
+static void units_to_steps(float *steps_out, float *units_in);
+static void steps_to_units(float *steps_in, float *units_out);
+
+//convert back and forth between active units/second and steps/ms
+//pass an array the size of NUM_AXES
+static void units_sec_to_steps_ms(float *steps_ms_out, float *units_sec_in);
+static void steps_ms_to_units_sec(float *steps_ms_in, float *units_sec_out);
+
+//convert back and forth between active units/sec^2 and steps/ms^2
+//pass an array the size of NUM_AXES
+static void units_sec2_to_steps_ms2(float *steps_ms2_out, float *units_sec2_in);
+static void steps_ms2_to_units_sec2(float *steps_ms2_in, float *units_sec2_out);
+
+//setter and getter methods for steps per unit
+//will be internally converted to steps per mm
+//but program can pass in values in units of the active_unit
+//arrays will be copied rather than referenced to the pointer for safety
+static void set_steps_per_unit(float *steps_per_u);
+static void get_steps_per_unit(float *steps_per_u);
+
+//set the active units that the program is using
+//really just takes a scaling to convert mm/unit ratio
+static void set_active_units(float _mm_per_unit);
+
+//would be a lot cleaner to implement units as enum types but can't have floating point enums
+//so define public facing `units` for gcode class
+static constexpr float INCHES = 25.4;
+static constexpr float MILLIMETERS = 1.0;
+
+static float mm_per_unit; //whatever units the G-code is being sent in
+static float steps_per_mm[NUM_AXES];

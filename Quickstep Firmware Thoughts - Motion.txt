@@ -1,0 +1,3 @@
+Profiler
+  --> when called by the planner
+	- provided type of move, control points and end coordinates

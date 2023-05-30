@@ -25,12 +25,18 @@ public:
 	//aggressively optimize for high performance in interrupt contexts
 	static __attribute__((optimize("O3"))) float cos(uint16_t x);
 
+	//implement a 12-bit LUT-based cosine - 1 function
+	//implements the function cos(2*pi/4096) - 1
+	//aggressively optimize for high performance in interrupt contexts
+	static __attribute__((optimize("O3"))) float cos_minus_1(uint16_t x);
+
 private:
 	Trig(); //don't allow instantiation
 
 	//the actual look-up tables
 	static const float SINE_LUT[4096];
 	static const float COSINE_LUT[4096];
+	static const float COSm1_LUT[4096];
 
 };
 

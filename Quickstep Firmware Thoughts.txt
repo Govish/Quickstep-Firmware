@@ -1,0 +1,117 @@
+
+AXIS timer interrupts (1 channel per axis, use the 4-channel 16-bit motor controller timers) 
+	- some integer multiple of the STEP timer interrupt frequency
+	- can have a synchronized reload of all the channels
+	- even better if runs at a power-of-two multiple of STEP timer interrupt (for integer mod math)
+
+STEP timer interrupt (order of 50kHz to 1MHz, use a 16-bit timer/counter) - USE THE AXIS TIMER INTERRUPT OVERFLOW
+	- firing of this interrupt calculates the position of the axes at NEXT timestep
+		- i.e. when the interrupt fires the first time with a 100kHz tick, calculates where things should be at 10us
+	- firing of this interrupt triggers motion computation:
+		- Computation of the position along the trajectory of the axes
+		- Vector multiplication of trajectory with respect to each axis
+	- Linear interpolation of timer values
+		- uses axis position from previous interrupt call and current interrupt call
+		- calculates the time delta at which a linear interpolation between the previous and current position crosses the step threshold
+
+Low-speed soft PWM (bewteen 1Hz - 1kHz, use a 16-bit timer/counter)
+	- run low-speed PWM devices, e.g. fans, heaters
+
+High-speed soft PWM (between 100Hz - 10kHz, use a 16-bit timer/counter)
+	- run high-speed PWM devices, e.g. LEDs
+
+General-Purpose scheduler (probably run at 100Hz to 1kHz)
+	- run stuff like the thermal controller, and other lower priority items
+
+External Alert/Debouncer Timer (nominally 1kHz)
+	- Sample limit switch inputs and other alert pins
+	- Update internal flags for:
+		- state change
+		- state change debounced
+		- rising edge
+		- rising edge debounced
+		- falling edge
+		- falling edge debounced
+
+=============================== TIMER ACCOUNTING ==========================
+5 PRIORITY LEVELS
+
+1x (maybe 2x) - 16-bit, 4 channel timers @50kHz-200kHz
+	- HIGH PRIORITY compare interrupt (step pulse generation)
+	- MEDIUM PRIORITY overflow interrupt (motion recomputation)
+1x - 16-bit, 1 channel timer for motion control functionality @50-200kHz
+	- HIGH PRIORITY overflow interrupt
+1x - 16-bit, 1 channel timer for debouncer @1kHz
+	- MEDIUM PRIORITY compare interrupt
+1x - 16-bit, 1 channel timer for high speed PWM @100kHz - 1MHz
+	- MEDIUM-HIGH PRIORITY compare interrupt
+1x - 16-bit, 1 channel timer for low speed PWM @1kHz - 10kHz
+	- MEDIUM PRIORITY compare interrupt
+1x - 16-bit, 1 channel timer for scheduler @1-10Hz
+	- LOW PRIORITY compare interrupt
+
+IDLE thread:
+	- sets watchdog timer
+	- checks to see how frequently threads are running
+
+============================= TIMER ALLOCATION =============================
+
+TIM1 & TIM8 --> step pulse generators
+	TIM1_CH1 on DMA2, stream 1
+	TIM1_CH2 on DMA2, stream 2
+	TIM1_CH3 on DMA2, stream 6
+	TIM8_CH2 on DMA2, stream 3
+	TIM8_CH3 on DMA2, stream 4
+	TIM8_CH4 on DMA2, stream 7
+		(leaves DMA2, streams 0, 5 free, can't map these to a timer unfortunately)
+
+TIM1 - reserving for firing into DMA2, see channels above
+TIM2 >>> 4x High-speed PWM Channels
+TIM3 >>> 4x High-speed PWM Channels (or servo, or DMA channel 1)
+TIM4 - reserving for firing into DMA channel 1 stream 0, 3, 7
+TIM5 - 4x Servo Channels 
+TIM6 >>> Pulser Tick (runs 4-8x as fast as the stepper interrupt
+TIM7 - reserving for DMA channel 1, stream 2 or 4 (can fire into DMA1 at 1kHz - 45MHz)
+TIM8 - reserving for firing into DMA2, see channels above
+TIM9 >>> Supervisor Tick @0.5 - 20Hz
+TIM10 - FREE
+TIM11 >>> Stepper Interrupt @50-200kHz (used to be Debouncer Tick @1kHz, getting rid of debouncer tick)
+TIM12 - reserving for WS2812 LEDs (pair with TIM6 or 7 potentially, can function by itself with overflow)
+TIM13 - 1MHz system performance tick counter (rolls over VERY often, every 50ms, using the 32-bit timer 2 sacrifices 4 PWM channels)
+TIM14 >>> Soft PWM Tick @ 100Hz - 10kHz
+
+========================= STEP COMPUTATION ISR =======================
+>>>in ISR that ticks at 100kHz (NOTE: ALL OF THESE VALUES WILL BE COMPUTED IN STEPS)
+ - increment the timer by the appropriate deltaT in microseconds
+ - pass the tick value into a function that computes distance along the trajectory
+	- this is where you'd throw in different acceleration profiles
+	- or input shaping theoretically
+ - pass the distance along the trajectory into a function that gives coordinates in 3-space (plus however many extruders and stuff; will be calling this 3plus-space)
+	- this is where you put in linear coordinate moves, arc moves, or spline moves
+ - pass the coordinates in 3plus-space into an inverse kinematics function that returns the absolute position of each of the motors (float value)
+	- can just map 
+	- this is where you throw in inverse kinematics for different motion systems 
+	- also 
+ - for each of the axes:
+	- if the calculated motor position is greater than the real motor position
+		- set the DIR pin to FORWARD //doing this to give the proper setup time for the direction pin
+		- if the calculated motor position minus real motor position is >1
+			- increment the real motor position
+			- compute change in calculated motor position from previous interrupt cycle--call this value pos_increment
+			- compute change in previous calculated motor position to the next whole number value--call this pos_to_whole
+			- stage a single step pulse with offset (pos_to_whole/pos_increment)
+	- else
+		- set the DIR pin to REVERSE
+		- if the calculated motor position minus real motor position <1
+			- decrement the real motor position
+			- compute the change in calculated motor position from the previous interrupt cycle--call this value pos_increment (should be negative)
+			- compute a change in previous calculated motor position to next whole number value--call this pos_to_whole (should be negative)
+			--stage a single step pulse with offset (pos_to_whole/pos_increment)
+ - if current tick is greater than or equal to move_finish_tick
+	- reset the tick to zero
+	- advance the HEAD of the move_ring_buffer
+
+
+====================================== links ========================================
+https://kleinembedded.com/cpp-and-stm32cubemx-code-generation/ - Using CPP with main function
+https://www.st.com/resource/en/reference_manual/dm00135183-stm32f446xx-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf - Register Mappings

@@ -30,16 +30,17 @@ const DIO y_step_pin(PinMap::y_mot_step);
 const DIO y_dir_pin(PinMap::y_mot_dir);
 const DIO y_en_pin(PinMap::y_mot_en);
 
-
 Hard_PWM led_fade(status_led, false);
 
 Soft_PWM red_pwm(led_red, 0, false);
 Soft_PWM green_pwm(led_green, 0.1, false);
 Soft_PWM yellow_pwm(led_yellow, 0.2, false);
+Soft_PWM soft_pwm_group[] = {red_pwm, green_pwm, yellow_pwm};
+uint8_t soft_pwm_group_size = sizeof(soft_pwm_group) / sizeof(soft_pwm_group[0]);
 
-Timer soft_pwm(Timer_Channels::CHANNEL_0);
-Timer stepper(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
-Timer supervisor(Timer_Channels::CHANNEL_2);
+const Timer soft_pwm(Timer_Channels::CHANNEL_0);
+const Timer stepper(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
+const Timer supervisor(Timer_Channels::CHANNEL_2);
 
 float pwm_val = 0;
 uint32_t counter = 0;
@@ -50,12 +51,6 @@ bool step_high = false;
 //but do it through the motion_control_core
 void stepper_func() {
 	Motion_Control_Core::mc_core_interrupt(x_step_pin, y_step_pin, 0.01); //10us interrupt period
-}
-
-void run_pwm() {
-	red_pwm.update();
-	yellow_pwm.update();
-	green_pwm.update();
 }
 
 void inc_pwm() {
@@ -77,12 +72,6 @@ void app_init() {
 	y_en_pin.clear();
 	y_dir_pin.set();
 
-	soft_pwm.init();
-	soft_pwm.set_phase(0);
-	soft_pwm.set_freq(Timer::FREQ_10kHz);
-	soft_pwm.set_int_priority(Priorities::MED);
-	soft_pwm.set_callback_func(&run_pwm);
-
 	stepper.init();
 	stepper.set_phase(0.1);
 	stepper.set_freq(Timer::FREQ_100kHz);
@@ -95,16 +84,16 @@ void app_init() {
 	supervisor.set_int_priority(Priorities::LOW);
 	supervisor.set_callback_func(&inc_pwm);
 
-	soft_pwm.enable_int();
-	soft_pwm.enable_tim();
-
 	stepper.enable_int();
 	stepper.enable_tim();
 
 	supervisor.enable_int();
 	supervisor.enable_tim();
 
-	Hard_PWM::configure(1000, Priorities::MED_HIGH);
+	Soft_PWM::configure(soft_pwm, Priorities::MED_HIGH, Timer::FREQ_10kHz, 0, soft_pwm_group, soft_pwm_group_size);
+	Soft_PWM::resynchronize(soft_pwm_group, soft_pwm_group_size);
+
+	Hard_PWM::configure(1000, Priorities::MED);
 }
 
 void app_loop() {

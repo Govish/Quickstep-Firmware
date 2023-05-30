@@ -6,7 +6,7 @@ NUM_POINTS = 4096
 FLOAT_PRECISION = 6
 
 x = np.arange(NUM_POINTS)
-sin_x = np.cos((2 * np.pi / 4096.0) * x)
+sin_x = np.cos((2 * np.pi / 4096.0) * x) - 1
 
 plt.plot(x, sin_x)
 plt.show()

@@ -40,19 +40,20 @@ typedef struct {
 class Timer {
 public:
 	Timer(timer_channel_t _channel);
-	void init(); //call this first before doing anything else really!
+	void init() const; //call this first before doing anything else really!
 
-	void set_freq(timer_freq_t freq);
-	void set_phase(float phase);
-	void set_callback_func(callback_function_t cb);
-	void set_int_priority(int_priority_t prio);
-	void enable_int();
-	void disable_int();
-	void enable_tim();
-	void disable_tim();
+	void set_freq(timer_freq_t freq) const;
+	void set_phase(float phase) const;
+	void reset_count() const;
+	void set_callback_func(callback_function_t cb) const;
+	void set_int_priority(int_priority_t prio) const;
+	void enable_int() const;
+	void disable_int() const;
+	void enable_tim() const;
+	void disable_tim() const;
 
-	float get_freq();
-	float get_tim_fclk();
+	float get_freq() const;
+	float get_tim_fclk() const;
 
 	static void delay_ms(uint32_t ms);
 	static uint32_t get_ms();
@@ -65,6 +66,7 @@ public:
 	static void __attribute__((optimize("O3"))) ISR_func(int channel);
 
 	//=================== section here just to declare frequency presets ======================
+	static const timer_freq_t FREQ_400kHz;
 	static const timer_freq_t FREQ_200kHz;
 	static const timer_freq_t FREQ_100kHz;
 	static const timer_freq_t FREQ_50kHz;

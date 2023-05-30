@@ -9,6 +9,9 @@
 
 //======================= DEFINING CLASS VARIABLES ====================
 bool Soft_PWM::__allow_updates__ = true; //run the ISR normally
+const Timer *Soft_PWM::soft_pwm_timer = NULL;
+uint32_t Soft_PWM::num_channels_to_update = 0;
+Soft_PWM *Soft_PWM::channels_to_update = NULL;
 
 //call resynchronize() after instantiating a new object to ensure Soft_PWM groups are phased correctly
 Soft_PWM::Soft_PWM(const DIO &_pin, const float _offset, const bool _inverted):
@@ -82,19 +85,37 @@ void __attribute__((optimize("O3"))) Soft_PWM::update() {
 	}
 }
 
+//Timer ISR function just runs through an array of all the channels and updates them all
+void __attribute__((optimize("O3"))) Soft_PWM::update_all() {
+	for(uint32_t i = 0; i < num_channels_to_update; i++)
+		channels_to_update[i].update();
+}
+
 //========================================= CLASS METHODS =======================================
-/*
- * An aside:
- * I'm reeeeeaaallllly not a fan of how this is implemented, as it seems to break abstraction rules
- * I'm implementing it like this in order to keep things as modularized as possible, but the fact that
- *  we need to pass it a list of all soft PWM objects externally rather than maintain a list internally
- *  feels kinda cumbersome
- *
- * This is somewhat necessary, as I can't find a way to maintain an expandable container of pointers
- *  to Soft_PWM instances without getting dangerous with the heap and compromise on ISR performance
- *
- * So as of now, we're just going to use arrays with some additional params to pass
- */
+
+//have the Soft_PWM class configure its own timer
+//need to pass in a callback function externally that updates all the Soft_PWM instances
+void Soft_PWM::configure(	const Timer &pwm_timer, int_priority_t priority, timer_freq_t freq,
+							float timer_phase, Soft_PWM chans[], const uint32_t num_chans) {
+	//save a pointer to the Timer referenced (not used as of now, future-proofing)
+	soft_pwm_timer = &pwm_timer;
+
+	//also save the address of the array of all the instantiated Soft_PWM channels
+	//and also the number of channels to update
+	channels_to_update = chans;
+	num_channels_to_update = num_chans;
+
+	//run the appropriate initialization functions
+	soft_pwm_timer->init();
+	soft_pwm_timer->set_phase(timer_phase);
+	soft_pwm_timer->set_freq(freq);
+	soft_pwm_timer->set_int_priority(priority);
+	soft_pwm_timer->set_callback_func(Soft_PWM::update_all);
+
+	//enable the timer and interrupt
+	soft_pwm_timer->enable_int();
+	soft_pwm_timer->enable_tim();
+}
 
 //updates the passed array of channels with the new resolution value
 //resynchronizes all Soft_PWM channels passed to this function
