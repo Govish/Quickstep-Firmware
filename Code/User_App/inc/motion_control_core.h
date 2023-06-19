@@ -14,16 +14,45 @@ extern "C" {
 
 #include "app_hal_dio.h" //for pin manipulation
 
+#include "app_hal_timing.h" //for mc_core timer control
+#include "app_hal_virtual_int.h" //to schedule calculation interrupts and step staging interrupts
+
+#include "profiler.h" //compute the speed of the move given a timestep
+#include "pather.h" //compute path of the axes in 3-space
+#include "kinematics.h" //inverse kinematics to get to axis step positions
+#include "pulser.h" //generate the step pulse for each stepper motor driver
+
 class Motion_Control_Core {
 public:
 
-	//this is the function where the heart of the motion control happens
-	//runs in an interrupt context, called from a timer interrupt
-	//pass in the how many microseconds since the last interrupt
-	static void mc_core_interrupt(const DIO &x_step_pin, const DIO &y_step_pin, float tick_inc_ms);
+	//pass in instances of scheduling utilities
+	//set them up and hook up handles to them with this function
+	static void configure(	const Timer &_mc_core_tim,
+							const Virtual_Int &_mc_calc_vint, const Virtual_Int &_mc_stage_step_vint);
+
+	//this is where all of the motion control calculation happens
+	//runs in an interrupt context, called from the NVIC indirectly from another interrupt
+	static void calc_interrupt();
+
+	//this is where step pulses get staged for the next timestep
+	//runs in an interrupt context, called from the NVIC indirectly from another interrupt
+	static void stage_step_interrupt();
+
+	//this is where the step pulses get executed (though through a helper function in pulser)
+	//called from an interrupt context, stages execution of mc_core_calc_interrupt() and mc_core_stage_step_interrupt()
+	static void pulse_interrupt();
+
+	//functions that enable and disable the timer corresponding to the motion control core
+	static void enable_mc_core();
+	static void disable_mc_core();
 
 private:
 	Motion_Control_Core(); //shouldn't be able to instantiate these
+
+	//pieces of firmware relevant to task scheduling
+	static const Timer *mc_core_tim;
+	static const Virtual_Int *mc_calc_vint;
+	static const Virtual_Int *mc_stage_step_vint;
 
 	static float motion_tick_ms; //accumulates the time into the particular move being traced
 	static float axis_position_f; //floating point axis position

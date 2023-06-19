@@ -85,8 +85,8 @@ private:
 	static const uint8_t pulse_counter_rollover_mask = ((uint8_t)SMOOTHING_RATIO * 2) - 1;
 	static const uint8_t pulse_counter_count_mask = ((uint8_t)SMOOTHING_RATIO) - 1; ;
 
-	static pulse_queue_t pulse_rising_edge[8];
-	static pulse_queue_t pulse_falling_edge[8];
+	static pulse_queue_t pulse_rising_edge[SMOOTHING_RATIO * 2];
+	static pulse_queue_t pulse_falling_edge[SMOOTHING_RATIO * 2];
 };
 
 

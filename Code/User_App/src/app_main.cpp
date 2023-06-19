@@ -25,10 +25,12 @@ const DIO status_led(PinMap::status_led);
 const DIO x_step_pin(PinMap::x_mot_step);
 const DIO x_dir_pin(PinMap::x_mot_dir);
 const DIO x_en_pin(PinMap::x_mot_en);
+Axis x_axis(x_step_pin, x_dir_pin, x_en_pin, false, 'X');
 
 const DIO y_step_pin(PinMap::y_mot_step);
 const DIO y_dir_pin(PinMap::y_mot_dir);
 const DIO y_en_pin(PinMap::y_mot_en);
+Axis y_axis(y_step_pin, y_dir_pin, y_en_pin, false, 'Y');
 
 Hard_PWM led_fade(status_led, false);
 
@@ -38,20 +40,15 @@ Soft_PWM yellow_pwm(led_yellow, 0.2, false);
 Soft_PWM soft_pwm_group[] = {red_pwm, green_pwm, yellow_pwm};
 uint8_t soft_pwm_group_size = sizeof(soft_pwm_group) / sizeof(soft_pwm_group[0]);
 
-const Timer soft_pwm(Timer_Channels::CHANNEL_0);
-const Timer stepper(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
+const Timer soft_pwm_tim(Timer_Channels::CHANNEL_0);
+const Timer mc_core_tim(Timer_Channels::CHANNEL_1); //step the motor driven by a timer (takes the spot of the debouncer in these tests
 const Timer supervisor(Timer_Channels::CHANNEL_2);
+
+const Virtual_Int mc_core_calc_vint(Virtual_Int_Channels::VINT_CHANNEL_0);
+const Virtual_Int mc_core_stage_step_vint(Virtual_Int_Channels::VINT_CHANNEL_1);
 
 float pwm_val = 0;
 uint32_t counter = 0;
-
-bool step_high = false;
-
-//toggle the step pin basically
-//but do it through the motion_control_core
-void stepper_func() {
-	Motion_Control_Core::mc_core_interrupt(x_step_pin, y_step_pin, 0.01); //10us interrupt period
-}
 
 void inc_pwm() {
 	pwm_val+= 0.25;
@@ -66,34 +63,25 @@ void inc_pwm() {
 void app_init() {
 	DIO::init();
 
-	x_en_pin.clear();
-	x_dir_pin.set();
-
-	y_en_pin.clear();
-	y_dir_pin.set();
-
-	stepper.init();
-	stepper.set_phase(0.1);
-	stepper.set_freq(Timer::FREQ_100kHz);
-	stepper.set_int_priority(Priorities::MED_HIGH);
-	stepper.set_callback_func(&stepper_func);
-
 	supervisor.init();
 	supervisor.set_phase(0.5);
 	supervisor.set_freq(Timer::FREQ_1Hz);
 	supervisor.set_int_priority(Priorities::LOW);
 	supervisor.set_callback_func(&inc_pwm);
 
-	stepper.enable_int();
-	stepper.enable_tim();
-
 	supervisor.enable_int();
 	supervisor.enable_tim();
 
-	Soft_PWM::configure(soft_pwm, Priorities::MED_HIGH, Timer::FREQ_10kHz, 0, soft_pwm_group, soft_pwm_group_size);
+	x_axis.init();
+	y_axis.init();
+
+	Motion_Control_Core::configure(mc_core_tim, mc_core_calc_vint, mc_core_stage_step_vint);
+	Motion_Control_Core::enable_mc_core();
+
+	Soft_PWM::configure(soft_pwm_tim, soft_pwm_group, soft_pwm_group_size);
 	Soft_PWM::resynchronize(soft_pwm_group, soft_pwm_group_size);
 
-	Hard_PWM::configure(1000, Priorities::MED);
+	Hard_PWM::configure(1000);
 }
 
 void app_loop() {

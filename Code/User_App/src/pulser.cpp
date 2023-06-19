@@ -9,6 +9,18 @@
 
 #include "arm_math.h" //for DSP library
 
+//======================== STATIC MEMBER VARIABLE INITIALIZATION ============================
+uint8_t Pulser::pulse_counter = 0;
+
+float Pulser::steps_minus_half[16];
+float Pulser::steps_plus_half[16];
+float Pulser::step_delta[16];
+
+pulse_queue_t Pulser::pulse_rising_edge[8];
+pulse_queue_t Pulser::pulse_falling_edge[8];
+
+//============================== FUNCTION DEFINITIONS ============================
+
 void Pulser::compute_step(float* axis_steps, pulse_param_t *pulse_params) {
 	//basically want the actual step position to be rounded to the closest value of the theoretical step position
 	//we require certain computations in the event of a step event, so let's just do that up front

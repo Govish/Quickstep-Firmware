@@ -23,7 +23,7 @@ extern "C" {
 
 //=========================== INITIALIZING STAIC MEMBERS HERE ==========================
 //initializing these empty callbacks for now, associate them with the proper callback funcs in the initializers
-void empty_handler();
+void empty_timer_handler();
 
 //THIS IS HOW THE TIMER OBJECT MAPS TO THE PHSYICAL HARDWARE
 const timer_config_struct_t Timer::timer_chan_configs[] = {
@@ -34,9 +34,9 @@ const timer_config_struct_t Timer::timer_chan_configs[] = {
 
 //initialize the callback function array to just be emtpy handlers at the start
 callback_function_t Timer::callbacks[] = {
-		empty_handler,
-		empty_handler,
-		empty_handler
+		empty_timer_handler,
+		empty_timer_handler,
+		empty_timer_handler
 };
 
 //=================== section here just to defining frequency presets ======================
@@ -202,4 +202,4 @@ void CHAN_2_IRQ_HANDLER(void) {
 	Timer::ISR_func(2);
 }
 
-void empty_handler() {}
+void empty_timer_handler() {}

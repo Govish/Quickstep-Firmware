@@ -13,7 +13,7 @@
 #define BOARD_HAL_INC_APP_HAL_TIMING_H_
 
 extern "C" {
-	#include "stm32f4xx_hal.h"
+	#include "stm32f4xx_hal.h" //need this for NVIC functions
 	#include "stm32f446xx.h" //need this for the IRQn_type
 }
 #include "app_hal_int_utils.h"

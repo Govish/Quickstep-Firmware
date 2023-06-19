@@ -15,6 +15,7 @@
 class Axis {
 public:
 	Axis(const DIO &_step, const DIO &_dir, const DIO &_en, const bool reversed, const char _alias);
+	void init();
 
 
 	void set_pos(int32_t position); //we'll cast to a float when we save thee variable
@@ -38,9 +39,8 @@ private:
 	const DIO *dir;
 	const DIO *en;
 
-	const char axis_alias; //what gcode letter corresponds to this axis
-
 	const bool DIRECTION_REVERSED;
+	const char axis_alias; //what gcode letter corresponds to this axis
 
 	float pos_min, pos_max;
 	float vel_max;

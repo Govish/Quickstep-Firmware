@@ -16,7 +16,7 @@ void Pather::path_to_3space(float dist_along_path, move_path_param_t *move_path,
 		path_to_3space_linear(dist_along_path, &move_path->move_params.linear_move_params, pos_3space);
 
 	else if(move_path->move_type == ARC)
-		; //todo
+		; //todo handle ARC moves
 }
 
 

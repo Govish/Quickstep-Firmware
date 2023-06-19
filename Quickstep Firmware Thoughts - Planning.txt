@@ -1,0 +1,51 @@
+Move Gcode Processing
+ 1) Gcode processor sends move to motion control core
+	- tbd whether scaling to mm happens in this step or the next step
+	- take the format of fixed size array of structs
+		- Array has as many positions as degrees of control (not necessarily number of axes, start with X, Y, Z, E)
+		- each struct has field bool 'ValueProvided' and float 'AxisPosition_mm'
+
+ 2) In motion control core, populate two arrays
+	- first element of array is starting coordinate (units of mm)
+	- second element of array is ending coordinate (units of mm)
+		- Vectors have as many positions as degrees of control (not necessarily number of axes, start with X, Y, Z, E)
+	To achieve this:
+	- Take input array from gcode processor
+	- Convert units to mm as necessary
+	- Convert motion axes to absolute, extruder axes to relative
+	- Axis mm coordinate position is maintained by motion_control_core 
+	- If we have stuff in the move buffer, starting coordinates are the finishing coordinates of the previous move
+	- Otherwise, run the current axis positions through the forward kinematics to get axis coordinates
+	
+ 3) Given the starting vector and ending vector use the kinematics module to calculate:
+	- Euclidean distance between starting and ending coordinate
+		- Calculate via DSP library
+	- Unit vector version of move
+		- Accomplish this by doing a vector subtraction using DSP library
+		- Divide this resultant vector by the euclidean distance calculated above
+		- This effectively becomes the move "direction"
+	- Bounds check the end coordinate
+		- Can run this in pure '3space' domain by comparing each coordinate to min/max values
+		- Can run this in 'tram-corrected 3space'
+			- Run the inverse kinematics of the tram correction (invert the forward tram correction matrix)
+			- Constrain the resultant coordinates to the axis limits
+			- Run the constrained coordinates through the forward kinematic matrix
+		>>> Can make this a "lightweight" version where don't do the forward and reverse matrix multiply
+			- Calculate a padding distance across all axes 
+			- Center this padded coordinate space within the real 3-space
+		- Can run this in the 'axis space' domain
+			- Run the end coordinates through the inverse kinematics matrix to get axis position
+			- Constrain the axis coordinates to axis limits
+			- Run these constrained axis values through the forward kinematics
+			>>> for cartesian machines, limits checking can exclusively happen here
+	- Compare the constrained coordinate with the original coordinate
+		- Recompute the move distance by dividing each 3space ordinate by the corresponding unit vector element
+
+4) With the move distance and direction in 3-space computed, use the kinematics module to
+	- compute the move distances in axis-space
+		- can be accomplished by running the direction vector first through the tram-correction matrix
+		- then run this result through the inverse-kinematics matrix
+		- then (probably) run this through a scaling vector to scale by steps per mm
+	
+		
+		

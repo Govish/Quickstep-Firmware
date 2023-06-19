@@ -38,7 +38,7 @@ public:
 	void force_asserted();
 	void force_deasserted();
 
-	static void configure(const float _freq, int_priority_t _priority); //have this apply to all PWM pins
+	static void configure(const float _freq); //have this apply to all PWM pins
 
 	//aggressively optimize here since this will be called from timer ISRs
 	//splitting into two ISRs due to two separate channel groups of four

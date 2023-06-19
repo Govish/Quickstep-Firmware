@@ -7,6 +7,24 @@
 
 #include "axis.h"
 
+Axis::Axis(const DIO &_step, const DIO &_dir, const DIO &_en, const bool reversed, const char _alias):
+	step(&_step), dir(&_dir), en(&_en), DIRECTION_REVERSED(reversed), axis_alias(_alias) {}
+
+void Axis::init() {
+	//getting the axes started in a safe state
+	step->clear();
+	dir->clear();
+	disable();
+}
+
+void Axis::set_pos(int32_t position) {
+	position_f = (float)position;
+}
+
+char Axis::get_axis_alias() {
+	return axis_alias;
+}
+
 //============================= heavily optimized public functions ============================
 float Axis::get_pos() {
 	return position_f;

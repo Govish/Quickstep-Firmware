@@ -31,6 +31,8 @@ extern "C" {
 	void TIM8_TRG_COM_TIM14_IRQHandler(void); //general purpose timer channel 2
 	void TIM2_IRQHandler(void); //hard PWM
 	void TIM3_IRQHandler(void); //hard PWM
+	void CEC_IRQHandler(void); //virtual interrupt channel 0
+	void SPDIF_RX_IRQHandler(void); //virtual interrupt channel 1
 }
 
 #endif /* BOARD_HAL_INC_APP_HAL_INT_UTILS_H_ */

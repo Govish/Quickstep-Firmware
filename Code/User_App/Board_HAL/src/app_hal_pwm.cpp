@@ -161,7 +161,7 @@ void Hard_PWM::force_deasserted() {
 	Hard_PWM::disable_chan_interrupt(channel_mapping);
 }
 
-void Hard_PWM::configure(const float _freq, int_priority_t _priority) {
+void Hard_PWM::configure(const float _freq) {
 	//call the initialization functions of both of the timers (ST HAL)
 	PWM_A_INIT_FUNC();
 	PWM_B_INIT_FUNC();
@@ -196,8 +196,8 @@ void Hard_PWM::configure(const float _freq, int_priority_t _priority) {
 	PWM_B_TIM.Instance->CNT = 0;
 
 	//configure the NVIC for the PWM channels, clear any pending interrupts
-	HAL_NVIC_SetPriority(PWM_A_IRQn, (uint32_t)_priority, 0);
-	HAL_NVIC_SetPriority(PWM_B_IRQn, (uint32_t)_priority, 0);
+	HAL_NVIC_SetPriority(PWM_A_IRQn, (uint32_t)Priorities::HIGH, 0);
+	HAL_NVIC_SetPriority(PWM_B_IRQn, (uint32_t)Priorities::HIGH, 0);
 	HAL_NVIC_ClearPendingIRQ(PWM_A_IRQn);
 	HAL_NVIC_ClearPendingIRQ(PWM_B_IRQn);
 	//then enable the interrupt via the NVIC, and enable the timer

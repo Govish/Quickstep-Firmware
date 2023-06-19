@@ -23,8 +23,7 @@ class Soft_PWM {
 public:
 	//have the Soft_PWM class configure its own timer
 	//pass in an array of Soft_PWM channels and the number of channels--ISR will call update on all of these
-	static void configure(	const Timer &pwm_timer, int_priority_t priority, timer_freq_t freq,
-							float timer_phase, Soft_PWM chans[], const uint32_t num_chans);
+	static void configure(const Timer &pwm_timer, Soft_PWM chans[], const uint32_t num_chans);
 
 	//function to set resolution of particular groups of PWM pins
 	//effective way to have Soft_PWM channels with different frequencies

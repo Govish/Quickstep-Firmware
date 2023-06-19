@@ -95,8 +95,7 @@ void __attribute__((optimize("O3"))) Soft_PWM::update_all() {
 
 //have the Soft_PWM class configure its own timer
 //need to pass in a callback function externally that updates all the Soft_PWM instances
-void Soft_PWM::configure(	const Timer &pwm_timer, int_priority_t priority, timer_freq_t freq,
-							float timer_phase, Soft_PWM chans[], const uint32_t num_chans) {
+void Soft_PWM::configure(const Timer &pwm_timer, Soft_PWM chans[], const uint32_t num_chans) {
 	//save a pointer to the Timer referenced (not used as of now, future-proofing)
 	soft_pwm_timer = &pwm_timer;
 
@@ -106,10 +105,12 @@ void Soft_PWM::configure(	const Timer &pwm_timer, int_priority_t priority, timer
 	num_channels_to_update = num_chans;
 
 	//run the appropriate initialization functions
+	//initializing the soft_pwm timer to run at 10kHz, no phase offset
+	//and with priority HIGH
 	soft_pwm_timer->init();
-	soft_pwm_timer->set_phase(timer_phase);
-	soft_pwm_timer->set_freq(freq);
-	soft_pwm_timer->set_int_priority(priority);
+	soft_pwm_timer->set_phase(0);
+	soft_pwm_timer->set_freq(Timer::FREQ_10kHz);
+	soft_pwm_timer->set_int_priority(Priorities::MED_HIGH);
 	soft_pwm_timer->set_callback_func(Soft_PWM::update_all);
 
 	//enable the timer and interrupt
